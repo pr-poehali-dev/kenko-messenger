@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Icon from '@/components/ui/icon';
+import { useAuth } from '@/context/AuthContext';
+import AuthScreen from '@/components/AuthScreen';
 
 type Msg = {
   id: number;
@@ -111,11 +113,13 @@ const StatusTicks = ({ status }: { status?: Msg['status'] }) => {
 };
 
 const Index = () => {
+  const { user, loading, logout } = useAuth();
   const [chats, setChats] = useState(initialChats);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [input, setInput] = useState('');
   const [recording, setRecording] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   const active = chats.find((c) => c.id === activeId) || null;
@@ -147,6 +151,27 @@ const Index = () => {
     c.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  if (loading) {
+    return (
+      <div className="h-[100dvh] w-full flex items-center justify-center bg-secondary chat-bg">
+        <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center shadow-xl shadow-blue-500/30 animate-pulse">
+          <Icon name="Send" size={28} className="text-white -rotate-12" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthScreen />;
+  }
+
+  const initials = (user.name || 'Я')
+    .split(' ')
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
   return (
     <div className="h-[100dvh] w-full bg-secondary flex justify-center overflow-hidden font-sans">
       <div className="w-full max-w-[1400px] h-full flex bg-background md:my-0 shadow-2xl md:shadow-none">
@@ -168,9 +193,42 @@ const Index = () => {
                   <span className="text-[11px] text-muted-foreground">всегда на связи</span>
                 </div>
               </div>
-              <button className="w-10 h-10 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground transition-colors">
-                <Icon name="Menu" size={22} />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setMenuOpen((v) => !v)}
+                  className="w-10 h-10 rounded-full hover:bg-secondary flex items-center justify-center text-muted-foreground transition-colors"
+                >
+                  <Icon name="Menu" size={22} />
+                </button>
+                {menuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(false)} />
+                    <div className="absolute right-0 top-12 z-30 w-60 bg-background rounded-2xl shadow-2xl border border-border p-2 animate-scale-in origin-top-right">
+                      <div className="flex items-center gap-3 px-3 py-2.5 mb-1">
+                        <div className="w-11 h-11 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center text-white font-semibold">
+                          {initials}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-semibold text-sm truncate">{user.name || 'Без имени'}</div>
+                          <div className="text-[12px] text-muted-foreground truncate">{user.phone}</div>
+                        </div>
+                      </div>
+                      <div className="h-px bg-border my-1" />
+                      <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-secondary text-sm transition-colors">
+                        <Icon name="Settings" size={18} className="text-muted-foreground" />
+                        Настройки
+                      </button>
+                      <button
+                        onClick={logout}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-destructive/10 text-sm text-destructive transition-colors"
+                      >
+                        <Icon name="LogOut" size={18} />
+                        Выйти из аккаунта
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
             {/* Search */}
             <div className="relative">

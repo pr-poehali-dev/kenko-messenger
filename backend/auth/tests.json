@@ -1,0 +1,34 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS CORS preflight",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Send code returns demo_code",
+      "method": "POST",
+      "path": "/?action=send_code",
+      "body": {"phone": "+79001234567"},
+      "expectedStatus": 200,
+      "expectedBody": {"ok": true},
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Verify with wrong code fails",
+      "method": "POST",
+      "path": "/?action=verify_code",
+      "body": {"phone": "+79001234567", "code": "000000"},
+      "expectedStatus": 400,
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Me without token unauthorized",
+      "method": "GET",
+      "path": "/?action=me",
+      "expectedStatus": 401,
+      "bodyMatcher": "partial"
+    }
+  ]
+}
